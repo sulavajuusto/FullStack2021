@@ -23,12 +23,16 @@ const Statistics = ({good,neutral,bad})=> {
 
     <div>
       <h2>Statistics</h2>
-    <StatisticLine text={'good'} value={good} />
-    <StatisticLine text={'neutral'} value={neutral} />
-    <StatisticLine text={'bad'} value={bad} />
+      <table>
+        <tbody>
+    <StatisticLine text={'Good'} value={good} />
+    <StatisticLine text={'Neutral'} value={neutral} />
+    <StatisticLine text={'Bad'} value={bad} />
     <StatisticLine text={'All'} value={total} />
     <StatisticLine text={'Average'} value={(good - bad )/(total)} />
-    <StatisticLine text={'Positive'} value={good/(total)} />
+    <StatisticLine text={'Positive'} value={good/(total) } valueChar={'%'} />
+        </tbody>
+      </table>
     </div>
   )
 } else {
@@ -41,11 +45,13 @@ const Statistics = ({good,neutral,bad})=> {
 }
 }
 
-const StatisticLine = ({text, value}) => {
+const StatisticLine = ({text, value, valueChar}) => {
+
   return(
-    <div>
-      <p>{text} {value}</p>
-    </div>
+    <tr>
+      <td>{text}</td>
+      <td>{(valueChar) ? value + '' + valueChar : value}</td>
+    </tr>
   )
 }
 
