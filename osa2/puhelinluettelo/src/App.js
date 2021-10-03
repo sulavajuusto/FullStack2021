@@ -1,6 +1,7 @@
 
 
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import Filter from './Components/Filter';
 import PersonForm from './Components/PersonForm';
 import Persons from './Components/Persons';
@@ -10,18 +11,24 @@ import Persons from './Components/Persons';
 const App = () => {
 
   const personInitializerArray =  [
-    { name: 'Arto Hellas', id : 0, phoneNumber : '040-1234567' },
-    { name: 'Ada Lovelace', phoneNumber: '39-44-5323523', id: 1 },
-    { name: 'Dan Abramov', phoneNumber: '12-43-234345', id: 2 },
-    { name: 'Mary Poppendieck', phoneNumber: '39-23-6423122', id: 3 }
   ]
 
-  const [ persons, setPersons ] = useState(personInitializerArray) 
+  const [persons, setPersons ] = useState([]) 
   const [personId, setpersonId] = useState(1)
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
-  const [filteredPersons, setFilteredPersons] =  useState(personInitializerArray)
+  const [filteredPersons, setFilteredPersons] =  useState([])
 
+
+ useEffect(() => {
+   axios
+   .get('http://localhost:3001/persons')
+   .then(response => {
+     console.log(response)
+     setPersons(response.data)
+     setFilteredPersons(response.data)
+   })
+ }, []) 
 
   const addPerson = (event) => {
     event.preventDefault();
