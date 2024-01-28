@@ -2,19 +2,22 @@ import React, { useEffect, useState } from 'react';
 import Filter from './Components/Filter';
 import PersonForm from './Components/PersonForm';
 import Persons from './Components/Persons';
+import Notification from './Components/Notification';
+import Errors from './Components/Errors';
 import personsService from './services/persons'
 
 
 const App = () => {
 
-  const personInitializerArray =  [
-  ]
+
 
   const [persons, setPersons ] = useState([]) 
   const [personId, setpersonId] = useState(1)
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [filteredPersons, setFilteredPersons] =  useState([])
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [confirmMessage, setConfirmMessage] = useState(null)
 
 
  useEffect(() => {
@@ -55,11 +58,20 @@ const App = () => {
       personsService
       .create(tempPerson)
       .then(newPerson => {
-  
+        
+      
+
         let newList = persons.concat(newPerson);
         setPersons(newList);
         //lets clear the filter also
         setFilteredPersons(newList);
+
+        setConfirmMessage(
+          `${newPerson.name} was added`
+        )
+        setTimeout(() => {
+          setConfirmMessage(null)
+        }, 5000)
       })
       setpersonId(tempId);
     }
@@ -81,6 +93,12 @@ const App = () => {
           setPersons(newList);
           //lets clear the filter also
           setFilteredPersons(newList);
+          setConfirmMessage(
+            `${data.name} phone number was set to ${data.phoneNumber} `
+          )
+          setTimeout(() => {
+            setConfirmMessage(null)
+          }, 5000)
         })
       }
     }
@@ -100,7 +118,7 @@ const App = () => {
 
   const deletePerson = (personId) => {
     if  (window.confirm("Are you sure you want to delete the user?")){
-        console.log(personId);
+      const personToDelete = persons.find(p => p.id === personId);
        personsService.deletePerson(personId)
        .then(data => {
         console.log(data);
@@ -108,7 +126,15 @@ const App = () => {
         setPersons(newList);
         //lets clear the filter also
         setFilteredPersons(newList);
-       });
+       })
+       .catch(error => {
+        setErrorMessage(
+          `Person '${personToDelete.name}' was already removed from server`
+        )
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+      })
       } else {
         console.log(personId);
       }
@@ -116,6 +142,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={confirmMessage} />
+      <Errors error={errorMessage} />
       <Filter filterOnChange={filterPersonsChange}/>
       <h3>Add a new person</h3>
       <PersonForm addPerson={addPerson} newName={newName} newNumber={newNumber} 
