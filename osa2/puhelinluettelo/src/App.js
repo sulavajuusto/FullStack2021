@@ -1,11 +1,8 @@
-
-
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import Filter from './Components/Filter';
 import PersonForm from './Components/PersonForm';
 import Persons from './Components/Persons';
-
+import personsService from './services/persons'
 
 
 const App = () => {
@@ -21,33 +18,72 @@ const App = () => {
 
 
  useEffect(() => {
-   axios
-   .get('http://localhost:3001/persons')
-   .then(response => {
-     console.log(response)
-     setPersons(response.data)
-     setFilteredPersons(response.data)
+  personsService
+  .getAll()
+   .then(data => {
+     setPersons(data);
+     setpersonId(figureHighestId(data));
+     setFilteredPersons(data);
    })
  }, []) 
 
+ const figureHighestId = (data) => {
+      let highest = 0;
+      if (data.length > 0){
+        for (let index = 0; index < data.length; index++) {
+          const person = data[index];
+          if (person.id > highest){
+            highest = person.id
+          }
+        }
+      }
+      console.log(`highest id ${highest}`);
+      return highest;
+ }
+
   const addPerson = (event) => {
     event.preventDefault();
-    console.log(persons.findIndex(x => x.name === newName))
     if (persons.findIndex(x => x.name === newName) > -1){
-      window.alert(`${newName} is already added to phonebook`)
+      handleSameName()
     }else {
       let tempId = personId;
+      tempId++;
       const tempPerson =  {
         name : newName,
-        id : tempId,
         phoneNumber : newNumber
       }
-      tempId++;
-      setPersons(persons.concat(tempPerson));
+      personsService
+      .create(tempPerson)
+      .then(newPerson => {
+  
+        let newList = persons.concat(newPerson);
+        setPersons(newList);
+        //lets clear the filter also
+        setFilteredPersons(newList);
+      })
       setpersonId(tempId);
     }
     setNewName('');
     setNewNumber('');
+  }
+
+  const handleSameName = () =>  {
+    
+    let foundPerson = persons.find(x => x.name === newName);
+    if (newNumber === foundPerson.phoneNumber){
+      window.alert(`${newName} is already added to phonebook`)
+    }else {
+      if  (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
+        const changedUser = { ...foundPerson, phoneNumber: newNumber };
+        personsService.update(foundPerson.id, changedUser)
+        .then(data => {
+          let newList = persons.map(n => n.id !== data.id ? n : data);
+          setPersons(newList);
+          //lets clear the filter also
+          setFilteredPersons(newList);
+        })
+      }
+    }
   }
   
   const handlePersonChange = (event) => {
@@ -61,6 +97,22 @@ const App = () => {
     const tempPersons = persons.filter(x => x.name.toString().toLowerCase().indexOf(event.target.value?.toString().toLowerCase()) !== -1);
     setFilteredPersons(tempPersons);
   }
+
+  const deletePerson = (personId) => {
+    if  (window.confirm("Are you sure you want to delete the user?")){
+        console.log(personId);
+       personsService.deletePerson(personId)
+       .then(data => {
+        console.log(data);
+        let newList = persons.filter(p => p.id !== personId);
+        setPersons(newList);
+        //lets clear the filter also
+        setFilteredPersons(newList);
+       });
+      } else {
+        console.log(personId);
+      }
+  }
   return (
     <div>
       <h2>Phonebook</h2>
@@ -69,7 +121,7 @@ const App = () => {
       <PersonForm addPerson={addPerson} newName={newName} newNumber={newNumber} 
       handleNumberChange={handleNumberChange} handlePersonChange={handlePersonChange} />
       <h2>Numbers</h2>
-      <Persons filteredPersons={filteredPersons}/>
+      <Persons filteredPersons={filteredPersons} deletePerson={deletePerson} />
     </div>
   )
 }
